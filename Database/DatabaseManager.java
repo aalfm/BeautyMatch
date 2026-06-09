@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DatabaseManager {
 
     private static final String URL =
-            "jdbc:sqlite:beauty_store.db";
+            "jdbc:sqlite:BeautyMatch.db";
 
     public static Connection connect() throws SQLException {
         return DriverManager.getConnection(URL);
