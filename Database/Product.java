@@ -21,10 +21,7 @@ public class Product {
 
     @Override
     public String toString() {
-        return String.format(
-                "%d | %s | %s | %s | Rp%d | %.1f | %s",
-                id, brand, productName,
-                category, price, rating, skinType
-        );
+        return String.format("%-3d | %-10s | %-45s | %-10s | %-12s | %-6.1f | %-15s",
+                id, brand, productName, category, "Rp" + price, rating, skinType);
     }
 }
