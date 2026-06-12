@@ -19,6 +19,14 @@ public class Product {
         this.skinType = skinType;
     }
 
+    public int getId() { return id; }
+    public String getBrand() { return brand; }
+    public String getProductName() { return productName; }
+    public String getCategory() { return category; }
+    public int getPrice() { return price; }
+    public double getRating() { return rating; }
+    public String getSkinType() { return skinType; }
+
     @Override
     public String toString() {
         return String.format("%-3d | %-10s | %-45s | %-10s | %-12s | %-6.1f | %-15s",
