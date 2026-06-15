@@ -116,13 +116,18 @@ public class RecommendationView implements ContentView {
                 List<Product> recsDP = ProductService.recommendDP(skin, cats);
                 long timeDP = System.nanoTime() - startDP;
 
+                // Run Hybrid
+                long startHybrid = System.nanoTime();
+                List<Product> recsHybrid = ProductService.recommendHybrid(skin, cats);
+                long timeHybrid = System.nanoTime() - startHybrid;
+
                 TabPane tabPane = new TabPane();
                 tabPane.setStyle("-fx-background-color: transparent;");
 
                 // Tab Greedy
                 Tab tabGreedy = new Tab("Metode Greedy");
                 tabGreedy.setClosable(false);
-                tabGreedy.setContent(buildResultContent(resultGreedy.getSelectedProducts(), resultGreedy.getTotalPrice(), resultGreedy.getTotalRating(), timeGreedy, true));
+                tabGreedy.setContent(buildResultContent(resultGreedy.getSelectedProducts(), resultGreedy.getTotalPrice(), resultGreedy.getTotalRating(), timeGreedy, "Greedy"));
 
                 // Tab DP
                 Tab tabDP = new Tab("Metode 0/1 Knapsack");
@@ -133,9 +138,20 @@ public class RecommendationView implements ContentView {
                     dpPrice += p.getPrice();
                     dpRating += p.getRating();
                 }
-                tabDP.setContent(buildResultContent(recsDP, dpPrice, dpRating, timeDP, false));
+                tabDP.setContent(buildResultContent(recsDP, dpPrice, dpRating, timeDP, "Knapsack"));
 
-                tabPane.getTabs().addAll(tabGreedy, tabDP);
+                // Tab Hybrid
+                Tab tabHybrid = new Tab("Metode Hybrid");
+                tabHybrid.setClosable(false);
+                int hybridPrice = 0;
+                double hybridRating = 0;
+                for (Product p : recsHybrid) {
+                    hybridPrice += p.getPrice();
+                    hybridRating += p.getRating();
+                }
+                tabHybrid.setContent(buildResultContent(recsHybrid, hybridPrice, hybridRating, timeHybrid, "Hybrid"));
+
+                tabPane.getTabs().addAll(tabGreedy, tabDP, tabHybrid);
 
                 resultArea.getChildren().add(tabPane);
                 resultArea.setVisible(true);
@@ -153,7 +169,7 @@ public class RecommendationView implements ContentView {
         return page;
     }
 
-    private VBox buildResultContent(List<Product> recs, int totalPrice, double totalRating, long timeNano, boolean isGreedy) {
+    private VBox buildResultContent(List<Product> recs, int totalPrice, double totalRating, long timeNano, String methodType) {
         VBox container = new VBox(16);
         container.setPadding(new Insets(16, 0, 0, 0));
 
@@ -165,7 +181,7 @@ public class RecommendationView implements ContentView {
         }
 
         // Title and Time
-        Label resTitle = new Label("🎉  Rekomendasi Terbaik (" + (isGreedy ? "Greedy" : "Knapsack") + ")");
+        Label resTitle = new Label("🎉  Rekomendasi Terbaik (" + methodType + ")");
         resTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: " + BeautyMatchApp.COLOR_SIDEBAR + ";");
         
         double timeMs = timeNano / 1_000_000.0;

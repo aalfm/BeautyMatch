@@ -28,6 +28,11 @@ public class ProductService {
         return core.RecommendationEngine.recommendProducts(candidates);
     }
 
+    public static List<Product> recommendHybrid(String skinType, List<String> categories) {
+        List<Product> candidates = dao.getProductsForRecommendation(skinType, categories);
+        return core.HybridRecommendationEngine.recommendProducts(candidates);
+    }
+
     public static void addProduct(String brand, String name, String category,
                                   int price, double rating, String skinType) {
         Product newProduct = new Product(0, brand, name, category, price, rating, skinType);
