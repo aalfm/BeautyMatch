@@ -5,20 +5,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecommendationEngine {
-    public static List<Product> recommendProducts(List<Product> products, int maxBudget) {
-        if (products == null || products.isEmpty() || maxBudget <= 0) {
+    public static List<Product> recommendProducts(List<Product> products) {
+        if (products == null || products.isEmpty()) {
             return new ArrayList<>();
         }
 
         int n = products.size();
         
-        // Optimize knapsack array size by dividing budget and prices by 1000.
-        // Assuming all prices in IDR are multiples of 1000.
-        int W = maxBudget / 1000;
+        // Cari RATA-RATA HARGA (Medium Price) untuk menciptakan budget buatan
+        long totalAllPrice = 0;
+        for (Product p : products) {
+            totalAllPrice += p.getPrice();
+        }
+        int avgPrice = (int)(totalAllPrice / n);
         
-        // dp[i][w] stores the maximum rating for the first i products with weight limit w
-        double[][] dp = new double[n + 1][W + 1];
-        boolean[][] keep = new boolean[n + 1][W + 1];
+        // Buat "Budget Menengah Buatan" sebesar 2x harga rata-rata
+        // Ini memaksa DP mencari barang yang terjangkau (sekitar harga menengah)
+        int artificialBudget = avgPrice * 2;
+        int W = artificialBudget / 1000;
+        
+        // dp[i][w][k] stores the maximum rating for the first i products with weight limit w and EXACTLY/AT MOST k items
+        double[][][] dp = new double[n + 1][W + 1][3];
+        boolean[][][] keep = new boolean[n + 1][W + 1][3];
 
         for (int i = 1; i <= n; i++) {
             Product currentProduct = products.get(i - 1);
@@ -26,31 +34,41 @@ public class RecommendationEngine {
             double value = currentProduct.getRating();
 
             for (int w = 0; w <= W; w++) {
-                if (weight <= w) {
-                    double valueIfIncluded = dp[i - 1][w - weight] + value;
-                    double valueIfExcluded = dp[i - 1][w];
+                for (int k = 1; k <= 2; k++) { // Constraint: Maximum 2 items
+                    if (weight <= w) {
+                        double valueIfIncluded = dp[i - 1][w - weight][k - 1] + value;
+                        double valueIfExcluded = dp[i - 1][w][k];
 
-                    if (valueIfIncluded > valueIfExcluded) {
-                        dp[i][w] = valueIfIncluded;
-                        keep[i][w] = true;
+                        if (valueIfIncluded > valueIfExcluded) {
+                            dp[i][w][k] = valueIfIncluded;
+                            keep[i][w][k] = true;
+                        } else {
+                            dp[i][w][k] = valueIfExcluded;
+                            keep[i][w][k] = false;
+                        }
                     } else {
-                        dp[i][w] = valueIfExcluded;
-                        keep[i][w] = false;
+                        dp[i][w][k] = dp[i - 1][w][k];
+                        keep[i][w][k] = false;
                     }
-                } else {
-                    dp[i][w] = dp[i - 1][w];
-                    keep[i][w] = false;
                 }
             }
         }
 
         List<Product> recommended = new ArrayList<>();
         int w = W;
-        for (int i = n; i > 0; i--) {
-            if (keep[i][w]) {
+        int k = 2;
+        
+        // Determine if picking 1 item is somehow better than 2 items (unlikely, but safe)
+        if (dp[n][W][1] > dp[n][W][2]) {
+            k = 1;
+        }
+
+        for (int i = n; i > 0 && k > 0; i--) {
+            if (keep[i][w][k]) {
                 Product chosenProduct = products.get(i - 1);
                 recommended.add(chosenProduct);
                 w -= chosenProduct.getPrice() / 1000;
+                k--;
             }
         }
 

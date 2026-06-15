@@ -26,54 +26,56 @@ public class GreedyRecommendationEngine {
         return filtered;
     }
 
-    //tahap 2 disini sort brdsrkn rating tertinggi
-    public static List<Product> sortByHighestRating(
+    //tahap 2 disini sort brdsrkn harga tertinggi dengan rating bagus (>= 4.0)
+    public static List<Product> sortByHighestPriceAndGoodRating(
             List<Product> products) {
 
-        List<Product> sorted = new ArrayList<>(products);
+        List<Product> filteredAndSorted = new ArrayList<>();
+        
+        // Hanya ambil yang ratingnya bagus (>= 4.0)
+        for (Product p : products) {
+            if (p.getRating() >= 4.0) {
+                filteredAndSorted.add(p);
+            }
+        }
 
-        sorted.sort(
-                Comparator.comparingDouble(Product::getRating)
+        // Urutkan dari harga paling mahal (tertinggi) ke paling murah
+        filteredAndSorted.sort(
+                Comparator.comparingInt(Product::getPrice)
                           .reversed()
         );
 
-        return sorted;
+        return filteredAndSorted;
     }
 
     //tahap 3 disni mi bekerja ki greedy selection nya
     public static GreedyResult recommendProducts(
-            List<Product> products,
-            int budget) {
+            List<Product> products) {
 
         List<Product> sortedProducts =
-                sortByHighestRating(products);
+                sortByHighestPriceAndGoodRating(products);
 
         List<Product> selectedProducts =
                 new ArrayList<>();
 
-        int remainingBudget = budget;
         int totalPrice = 0;
         double totalRating = 0;
 
         for (Product product : sortedProducts) {
+            if (selectedProducts.size() >= 2) break; // Limit to 2 products
 
-            if (product.getPrice() <= remainingBudget) {
-
-                selectedProducts.add(product);
-
-                remainingBudget -= product.getPrice();
-
-                totalPrice += product.getPrice();
-
-                totalRating += product.getRating();
-            }
+            // TIDAK ADA LAGI PERBANDINGAN DENGAN BUDGET!
+            // Langsung ambil 2 produk termahal
+            selectedProducts.add(product);
+            totalPrice += product.getPrice();
+            totalRating += product.getRating();
         }
 
         return new GreedyResult(
                 selectedProducts,
                 totalPrice,
                 totalRating,
-                remainingBudget
+                0 // Sisa budget tidak relevan lagi
         );
     }
 
