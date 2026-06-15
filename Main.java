@@ -19,8 +19,9 @@ public class Main {
             System.out.println("3. Hapus Produk");
             System.out.println("4. Cari Produk Berdasarkan Kategori");
             System.out.println("5. Dapatkan Rekomendasi Produk (0/1 Knapsack)");
-            System.out.println("6. Keluar");
-            System.out.print("Pilih menu (1-6): ");
+            System.out.println("6. Dapatkan Rekomendasi Produk (Greedy)");
+            System.out.println("7. Keluar");
+            System.out.print("Pilih menu (1-7): ");
 
             int choice = -1;
             try {
@@ -47,6 +48,9 @@ public class Main {
                     getRecommendation();
                     break;
                 case 6:
+                    getGreedyRecommendation();
+                    break;
+                case 7:
                     running = false;
                     System.out.println("Terima kasih telah menggunakan BeautyMatch!");
                     break;
@@ -179,4 +183,94 @@ public class Main {
         }
         System.out.println("===============================================================================================================================");
     }
+
+    private static void getGreedyRecommendation() {
+
+    System.out.println("\n--- Dapatkan Rekomendasi Produk (Greedy) ---");
+
+    try {
+
+        System.out.print("Masukkan budget maksimum (Rp): ");
+        int budget = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("Masukkan jenis kulit Anda (mis. Normal, Kering, Berminyak, Kombinasi, atau Semua Kulit): ");
+        String skinType = InputUtils.formatCapitalize(scanner.nextLine());
+
+        System.out.print("Masukkan kategori produk yang diinginkan (pisahkan dengan koma, mis. Lip,Cushion): ");
+        String categoriesInput = scanner.nextLine();
+
+        List<String> desiredCategories = new ArrayList<>();
+
+        for (String cat : categoriesInput.split(",")) {
+            desiredCategories.add(
+                    InputUtils.formatCapitalize(cat.trim())
+            );
+        }
+
+        List<Product> candidateProducts =
+                dao.getProductsForRecommendation(
+                        skinType,
+                        desiredCategories
+                );
+
+        if (candidateProducts.isEmpty()) {
+
+            System.out.println(
+                    "Maaf, tidak ada produk yang sesuai dengan kriteria."
+            );
+
+            return;
+        }
+
+        GreedyResult result =
+                GreedyRecommendationEngine
+                        .recommendProducts(
+                                candidateProducts,
+                                budget
+                        );
+
+        if (result.getSelectedProducts().isEmpty()) {
+
+            System.out.println(
+                    "Maaf, budget Anda tidak cukup."
+            );
+
+            return;
+        }
+
+        System.out.println("\n=== Hasil Rekomendasi Greedy ===");
+
+        printProductsTable(
+                result.getSelectedProducts()
+        );
+
+        System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
+
+        System.out.println(
+                "Total Harga  : Rp "
+                        + result.getTotalPrice()
+        );
+
+        System.out.println(
+                "Total Rating : "
+                        + String.format(
+                                "%.1f",
+                                result.getTotalRating()
+                        )
+        );
+
+        System.out.println(
+                "Sisa Budget  : Rp "
+                        + result.getRemainingBudget()
+        );
+
+        System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
+
+    } catch (NumberFormatException e) {
+
+        System.out.println(
+                "Input budget tidak valid."
+        );
+    }
+  }
 }
