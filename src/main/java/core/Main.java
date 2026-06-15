@@ -122,9 +122,6 @@ public class Main {
     private static void getRecommendation() {
         System.out.println("\n--- Dapatkan Rekomendasi Produk ---");
         try {
-            System.out.print("Masukkan budget maksimum (Rp): ");
-            int budget = Integer.parseInt(scanner.nextLine());
-            
             System.out.print("Masukkan jenis kulit Anda (mis. Normal, Kering, Berminyak, Kombinasi, atau Semua Kulit): ");
             String skinType = InputUtils.formatCapitalize(scanner.nextLine());
             
@@ -147,10 +144,10 @@ public class Main {
             System.out.println("Menemukan " + candidateProducts.size() + " produk kandidat. Memulai kalkulasi Knapsack...");
 
             // Jalankan algoritma Dynamic Programming 0/1 Knapsack untuk mendapatkan rekomendasi terbaik
-            List<Product> recommendedProducts = RecommendationEngine.recommendProducts(candidateProducts, budget);
+            List<Product> recommendedProducts = RecommendationEngine.recommendProducts(candidateProducts);
 
             if (recommendedProducts.isEmpty()) {
-                System.out.println("Maaf, budget Anda tidak cukup untuk membeli produk yang sesuai kriteria.");
+                System.out.println("Maaf, tidak dapat menemukan kombinasi produk.");
                 return;
             }
 
@@ -166,12 +163,12 @@ public class Main {
 
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
             System.out.println("Total Harga  : Rp " + totalPrice);
-            System.out.println("Total Rating : " + String.format("%.1f", totalRating));
-            System.out.println("Sisa Budget  : Rp " + (budget - totalPrice));
+            double avgRating = recommendedProducts.isEmpty() ? 0 : totalRating / recommendedProducts.size();
+            System.out.println("Rata-rata Rating : " + String.format("%.1f", avgRating));
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
-        } catch (NumberFormatException e) {
-            System.out.println("Input budget tidak valid. Harap masukkan angka.");
+        } catch (Exception e) {
+            System.out.println("Input tidak valid.");
         }
     }
 
@@ -191,9 +188,6 @@ public class Main {
     System.out.println("\n--- Dapatkan Rekomendasi Produk (Greedy) ---");
 
     try {
-
-        System.out.print("Masukkan budget maksimum (Rp): ");
-        int budget = Integer.parseInt(scanner.nextLine());
 
         System.out.print("Masukkan jenis kulit Anda (mis. Normal, Kering, Berminyak, Kombinasi, atau Semua Kulit): ");
         String skinType = InputUtils.formatCapitalize(scanner.nextLine());
@@ -227,14 +221,13 @@ public class Main {
         GreedyResult result =
                 GreedyRecommendationEngine
                         .recommendProducts(
-                                candidateProducts,
-                                budget
+                                candidateProducts
                         );
 
         if (result.getSelectedProducts().isEmpty()) {
 
             System.out.println(
-                    "Maaf, budget Anda tidak cukup."
+                    "Maaf, tidak ada produk yang direkomendasikan."
             );
 
             return;
@@ -252,26 +245,22 @@ public class Main {
                 "Total Harga  : Rp "
                         + result.getTotalPrice()
         );
-
+        
+        double avgRating = result.getSelectedProducts().isEmpty() ? 0 : result.getTotalRating() / result.getSelectedProducts().size();
         System.out.println(
-                "Total Rating : "
+                "Rata-rata Rating : "
                         + String.format(
                                 "%.1f",
-                                result.getTotalRating()
+                                avgRating
                         )
-        );
-
-        System.out.println(
-                "Sisa Budget  : Rp "
-                        + result.getRemainingBudget()
         );
 
         System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
-    } catch (NumberFormatException e) {
+    } catch (Exception e) {
 
         System.out.println(
-                "Input budget tidak valid."
+                "Input tidak valid."
         );
     }
   }
