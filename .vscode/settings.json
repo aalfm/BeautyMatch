@@ -2,5 +2,6 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
         "c:\\Users\\ASUS\\Downloads\\sqlite-jdbc-3.53.2.0.jar"
-    ]
+    ],
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
