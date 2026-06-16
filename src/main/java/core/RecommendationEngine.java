@@ -5,24 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecommendationEngine {
-    public static List<Product> recommendProducts(List<Product> products) {
-        if (products == null || products.isEmpty()) {
+    public static List<Product> recommendProducts(List<Product> products, int maxBudget) {
+        if (products == null || products.isEmpty() || maxBudget <= 0) {
             return new ArrayList<>();
         }
 
         int n = products.size();
         
-        // Cari RATA-RATA HARGA (Medium Price) untuk menciptakan budget buatan
-        long totalAllPrice = 0;
-        for (Product p : products) {
-            totalAllPrice += p.getPrice();
-        }
-        int avgPrice = (int)(totalAllPrice / n);
-        
-        // Buat "Budget Menengah Buatan" sebesar 2x harga rata-rata
-        // Ini memaksa DP mencari barang yang terjangkau (sekitar harga menengah)
-        int artificialBudget = avgPrice * 2;
-        int W = artificialBudget / 1000;
+        // Menggunakan batas budget dari user
+        int W = maxBudget / 1000;
         
         // dp[i][w][k] stores the maximum rating for the first i products with weight limit w and EXACTLY/AT MOST k items
         double[][][] dp = new double[n + 1][W + 1][3];

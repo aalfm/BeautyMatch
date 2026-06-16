@@ -122,6 +122,9 @@ public class Main {
     private static void getRecommendation() {
         System.out.println("\n--- Dapatkan Rekomendasi Produk ---");
         try {
+            System.out.print("Masukkan budget maksimum (Rp): ");
+            int budget = Integer.parseInt(scanner.nextLine());
+            
             System.out.print("Masukkan jenis kulit Anda (mis. Normal, Kering, Berminyak, Kombinasi, atau Semua Kulit): ");
             String skinType = InputUtils.formatCapitalize(scanner.nextLine());
             
@@ -144,10 +147,10 @@ public class Main {
             System.out.println("Menemukan " + candidateProducts.size() + " produk kandidat. Memulai kalkulasi Knapsack...");
 
             // Jalankan algoritma Dynamic Programming 0/1 Knapsack untuk mendapatkan rekomendasi terbaik
-            List<Product> recommendedProducts = RecommendationEngine.recommendProducts(candidateProducts);
+            List<Product> recommendedProducts = RecommendationEngine.recommendProducts(candidateProducts, budget);
 
             if (recommendedProducts.isEmpty()) {
-                System.out.println("Maaf, tidak dapat menemukan kombinasi produk.");
+                System.out.println("Maaf, budget Anda tidak cukup untuk membeli produk yang sesuai kriteria.");
                 return;
             }
 
@@ -165,8 +168,11 @@ public class Main {
             System.out.println("Total Harga  : Rp " + totalPrice);
             double avgRating = recommendedProducts.isEmpty() ? 0 : totalRating / recommendedProducts.size();
             System.out.println("Rata-rata Rating : " + String.format("%.1f", avgRating));
+            System.out.println("Sisa Budget  : Rp " + (budget - totalPrice));
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
+        } catch (NumberFormatException e) {
+            System.out.println("Input budget tidak valid.");
         } catch (Exception e) {
             System.out.println("Input tidak valid.");
         }
@@ -188,6 +194,9 @@ public class Main {
     System.out.println("\n--- Dapatkan Rekomendasi Produk (Greedy) ---");
 
     try {
+
+        System.out.print("Masukkan budget maksimum (Rp): ");
+        int budget = Integer.parseInt(scanner.nextLine());
 
         System.out.print("Masukkan jenis kulit Anda (mis. Normal, Kering, Berminyak, Kombinasi, atau Semua Kulit): ");
         String skinType = InputUtils.formatCapitalize(scanner.nextLine());
@@ -221,13 +230,14 @@ public class Main {
         GreedyResult result =
                 GreedyRecommendationEngine
                         .recommendProducts(
-                                candidateProducts
+                                candidateProducts,
+                                budget
                         );
 
         if (result.getSelectedProducts().isEmpty()) {
 
             System.out.println(
-                    "Maaf, tidak ada produk yang direkomendasikan."
+                    "Maaf, budget Anda tidak cukup."
             );
 
             return;
@@ -255,13 +265,17 @@ public class Main {
                         )
         );
 
+        System.out.println(
+                "Sisa Budget  : Rp "
+                        + result.getRemainingBudget()
+        );
+
         System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
 
+    } catch (NumberFormatException e) {
+        System.out.println("Input budget tidak valid.");
     } catch (Exception e) {
-
-        System.out.println(
-                "Input tidak valid."
-        );
+        System.out.println("Input tidak valid.");
     }
   }
 }

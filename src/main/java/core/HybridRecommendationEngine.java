@@ -6,11 +6,11 @@ import java.util.List;
 
 public class HybridRecommendationEngine {
 
-    public static List<Product> recommendProducts(List<Product> products) {
+    public static List<Product> recommendProducts(List<Product> products, int budget) {
         List<Product> hasilMix = new ArrayList<>();
 
-        //tahap 1 - menjalankan algoritma Greedy untuk mendapatkan daftar barang termahal
-        GreedyResult hasilGreedy = GreedyRecommendationEngine.recommendProducts(products);
+        //tahap 1 - menjalankan algoritma Greedy untuk mendapatkan daftar barang termahal yang muat di budget
+        GreedyResult hasilGreedy = GreedyRecommendationEngine.recommendProducts(products, budget);
 
         if (hasilGreedy != null && !hasilGreedy.getSelectedProducts().isEmpty()) {
 
@@ -26,11 +26,14 @@ public class HybridRecommendationEngine {
                 }
             }
 
-            //tahap 4 - Lempar sisa katalog ke DP untuk mencari barang terjangkau pendamping
-            List<Product> tambahanDP = RecommendationEngine.recommendProducts(sisaKatalog);
-            if (tambahanDP != null && !tambahanDP.isEmpty()) {
-                // DP mengembalikan 2 barang, kita cukup ambil 1 untuk melengkapi Hybrid menjadi total 2 barang
-                hasilMix.add(tambahanDP.get(0));
+            int sisaBudget = budget - barangIdaman.getPrice();
+            if (sisaBudget > 0) {
+                //tahap 4 - Lempar sisa katalog ke DP dengan sisa budget untuk mencari barang terjangkau pendamping
+                List<Product> tambahanDP = RecommendationEngine.recommendProducts(sisaKatalog, sisaBudget);
+                if (tambahanDP != null && !tambahanDP.isEmpty()) {
+                    // DP mengembalikan max 2 barang, kita cukup ambil 1 untuk melengkapi Hybrid menjadi total 2 barang
+                    hasilMix.add(tambahanDP.get(0));
+                }
             }
         }
 

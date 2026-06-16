@@ -18,19 +18,19 @@ public class ProductService {
         return toRows(dao.getProductsByCategory(category));
     }
 
-    public static GreedyResult recommendGreedy(String skinType, List<String> categories) {
+    public static GreedyResult recommendGreedy(int budget, String skinType, List<String> categories) {
         List<Product> candidates = dao.getProductsForRecommendation(skinType, categories);
-        return GreedyRecommendationEngine.recommendProducts(candidates);
+        return GreedyRecommendationEngine.recommendProducts(candidates, budget);
     }
 
-    public static List<Product> recommendDP(String skinType, List<String> categories) {
+    public static List<Product> recommendDP(int budget, String skinType, List<String> categories) {
         List<Product> candidates = dao.getProductsForRecommendation(skinType, categories);
-        return core.RecommendationEngine.recommendProducts(candidates);
+        return core.RecommendationEngine.recommendProducts(candidates, budget);
     }
 
-    public static List<Product> recommendHybrid(String skinType, List<String> categories) {
+    public static List<Product> recommendHybrid(int budget, String skinType, List<String> categories) {
         List<Product> candidates = dao.getProductsForRecommendation(skinType, categories);
-        return core.HybridRecommendationEngine.recommendProducts(candidates);
+        return core.HybridRecommendationEngine.recommendProducts(candidates, budget);
     }
 
     public static void addProduct(String brand, String name, String category,
