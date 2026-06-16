@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import core.GreedyResult;
 import Database.Product;
+import core.HybridResult;
 
 public class RecommendationView implements ContentView {
 
@@ -135,7 +136,7 @@ public class RecommendationView implements ContentView {
 
                 // Run Hybrid
                 long startHybrid = System.nanoTime();
-                List<Product> recsHybrid = ProductService.recommendHybrid(budget, skin, cats);
+                HybridResult recsHybrid = ProductService.recommendHybrid(budget, skin, cats);
                 long timeHybrid = System.nanoTime() - startHybrid;
 
                 TabPane tabPane = new TabPane();
@@ -160,13 +161,7 @@ public class RecommendationView implements ContentView {
                 // Tab Hybrid
                 Tab tabHybrid = new Tab("Metode Hybrid");
                 tabHybrid.setClosable(false);
-                int hybridPrice = 0;
-                double hybridRating = 0;
-                for (Product p : recsHybrid) {
-                    hybridPrice += p.getPrice();
-                    hybridRating += p.getRating();
-                }
-                tabHybrid.setContent(buildResultContent(recsHybrid, hybridPrice, hybridRating, budget, timeHybrid, "Hybrid"));
+                tabHybrid.setContent(buildHybridContent(recsHybrid, timeHybrid));
 
                 tabPane.getTabs().addAll(tabGreedy, tabDP, tabHybrid);
 
@@ -208,21 +203,86 @@ public class RecommendationView implements ContentView {
         HBox header = new HBox(15, resTitle, timeLabel);
         header.setAlignment(Pos.BOTTOM_LEFT);
 
-        // Grid
+        // Grid / Layout
         FlowPane cards = new FlowPane();
         cards.setHgap(14);
         cards.setVgap(14);
         for (Product r : recs) {
             cards.getChildren().add(UI.productCard(
                 r.getId(), r.getBrand(), r.getProductName(),
-                r.getCategory(), r.getPrice(), r.getRating(), r.getSkinType()
+                r.getCategory(), r.getPrice(), r.getRating(), r.getSkinType(), 0
             ));
         }
-
         // Summary
         HBox summary = buildSummaryBar(recs.size(), totalPrice, budget, totalRating);
-
         container.getChildren().addAll(header, cards, summary);
+        return container;
+    }
+
+    private VBox buildHybridContent(HybridResult res, long timeNano) {
+        VBox container = new VBox(16);
+        container.setPadding(new Insets(16, 0, 0, 0));
+
+        boolean emptyGreedy = res.getGreedyProducts().isEmpty();
+        boolean emptyDp = res.getDpProducts().isEmpty();
+        boolean emptyOther = res.getOtherCategoryProducts().isEmpty();
+
+        if (emptyGreedy && emptyDp && emptyOther) {
+            Label noResult = new Label("😔  Budget tidak cukup atau tidak ada produk yang sesuai kriteria.");
+            noResult.setStyle("-fx-font-size: 14px; -fx-text-fill: " + BeautyMatchApp.COLOR_TEXT_MUTED + ";");
+            container.getChildren().add(noResult);
+            return container;
+        }
+
+        Label resTitle = new Label("🎉  Rekomendasi Terbaik (Hybrid)");
+        resTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: " + BeautyMatchApp.COLOR_SIDEBAR + ";");
+        
+        double timeMs = timeNano / 1_000_000.0;
+        Label timeLabel = new Label(String.format("⏱ Waktu Eksekusi: %.3f ms", timeMs));
+        timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #8C7B80; -fx-font-style: italic;");
+        
+        HBox header = new HBox(15, resTitle, timeLabel);
+        header.setAlignment(Pos.BOTTOM_LEFT);
+
+        VBox hybridContent = new VBox(10);
+        
+        // Tier 1: Greedy
+        if (!emptyGreedy) {
+            Label sultanLabel = new Label("👑 Pilihan Sultan (Algoritma Greedy)");
+            sultanLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #FFB300; -fx-font-size: 13px;");
+            FlowPane cardsTop = new FlowPane();
+            cardsTop.setHgap(14); cardsTop.setVgap(14);
+            for (Product p : res.getGreedyProducts()) {
+                cardsTop.getChildren().add(UI.productCard(p.getId(), p.getBrand(), p.getProductName(), p.getCategory(), p.getPrice(), p.getRating(), p.getSkinType(), 1));
+            }
+            hybridContent.getChildren().addAll(sultanLabel, cardsTop);
+        }
+
+        // Tier 2: DP
+        if (!emptyDp) {
+            Label dpLabel = new Label("💡 Rekomendasi Pendamping (Algoritma 0/1 Knapsack)");
+            dpLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #8C7B80; -fx-font-size: 13px; -fx-padding: 10 0 0 0;");
+            FlowPane cardsMid = new FlowPane();
+            cardsMid.setHgap(14); cardsMid.setVgap(14);
+            for (Product p : res.getDpProducts()) {
+                cardsMid.getChildren().add(UI.productCard(p.getId(), p.getBrand(), p.getProductName(), p.getCategory(), p.getPrice(), p.getRating(), p.getSkinType(), 2));
+            }
+            hybridContent.getChildren().addAll(dpLabel, cardsMid);
+        }
+
+        // Tier 3: Other Categories
+        if (!emptyOther) {
+            Label otherLabel = new Label("✨ Pilihan Kategori Lainnya (Sisa Katalog)");
+            otherLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: " + BeautyMatchApp.COLOR_SIDEBAR + "; -fx-font-size: 13px; -fx-padding: 10 0 0 0;");
+            FlowPane cardsBottom = new FlowPane();
+            cardsBottom.setHgap(14); cardsBottom.setVgap(14);
+            for (Product p : res.getOtherCategoryProducts()) {
+                cardsBottom.getChildren().add(UI.productCard(p.getId(), p.getBrand(), p.getProductName(), p.getCategory(), p.getPrice(), p.getRating(), p.getSkinType(), 0));
+            }
+            hybridContent.getChildren().addAll(otherLabel, cardsBottom);
+        }
+
+        container.getChildren().addAll(header, hybridContent);
         return container;
     }
 

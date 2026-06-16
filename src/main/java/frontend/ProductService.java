@@ -28,7 +28,7 @@ public class ProductService {
         return core.RecommendationEngine.recommendProducts(candidates, budget);
     }
 
-    public static List<Product> recommendHybrid(int budget, String skinType, List<String> categories) {
+    public static core.HybridResult recommendHybrid(int budget, String skinType, List<String> categories) {
         List<Product> candidates = dao.getProductsForRecommendation(skinType, categories);
         return core.HybridRecommendationEngine.recommendProducts(candidates, budget);
     }
