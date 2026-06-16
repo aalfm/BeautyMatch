@@ -63,18 +63,32 @@ class UI {
 
     // ── Product Card (for recommendation results) ───────────────────
     static VBox productCard(int id, String brand, String name, String category,
-                            int price, double rating, String skinType) {
+                            int price, double rating, String skinType, int styleType) {
         VBox card = new VBox(6);
         card.setPadding(new Insets(16));
         card.setPrefWidth(190);
         card.setMaxWidth(220);
+
+        String bgStyle;
+        if (styleType == 1) { // Gold
+            bgStyle = "-fx-background-color: linear-gradient(to bottom right, #FFF9E6, #FFECB3);" +
+                      "-fx-border-color: #FFC107;" +
+                      "-fx-effect: dropshadow(gaussian, rgba(255,193,7,0.4), 12, 0, 0, 4);";
+        } else if (styleType == 2) { // Grey
+            bgStyle = "-fx-background-color: #F0F0F0;" +
+                      "-fx-border-color: #D0D0D0;" +
+                      "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);";
+        } else { // Normal
+            bgStyle = "-fx-background-color: white;" +
+                      "-fx-border-color: " + BeautyMatchApp.COLOR_BORDER + ";" +
+                      "-fx-effect: dropshadow(gaussian, rgba(92,45,60,0.07), 8, 0, 0, 2);";
+        }
+
         card.setStyle(
-            "-fx-background-color: white;" +
+            bgStyle +
             "-fx-background-radius: 12;" +
-            "-fx-border-color: " + BeautyMatchApp.COLOR_BORDER + ";" +
             "-fx-border-radius: 12;" +
-            "-fx-border-width: 1;" +
-            "-fx-effect: dropshadow(gaussian, rgba(92,45,60,0.07), 8, 0, 0, 2);"
+            "-fx-border-width: " + (styleType == 1 ? "2;" : "1;")
         );
 
         // Category badge
