@@ -7,18 +7,13 @@ import Database.Product;
 
 public class HybridRecommendationEngine {
 
-    public static List<Product> recommendProducts(List<Product> products, int budget, String skinType) {
+    public static List<Product> recommendProducts(List<Product> products, int budget) {
         List<Product> hasilMix = new ArrayList<>();
         List<String> kategoriTersimpan = new ArrayList<>();
         int sisaBudget = budget;
 
-        // tahap 1 - saring awal: buang semua barang yang dari awal udah lebih mahal dari budget pelanggan
-        List<Product> produkMasukBudget = new ArrayList<>();
-        for (Product p : products) {
-            if (p.getPrice() <= sisaBudget) {
-                produkMasukBudget.add(p);
-            }
-        }
+        //tahap 1 - menjalankan algoritma Greedy untuk mendapatkan daftar barang termahal yang muat di budget
+        GreedyResult hasilGreedy = GreedyRecommendationEngine.recommendProducts(products, budget);
 
         // tahap 2 - lempar data yang udah aman ke greedy buatan tim lu
         GreedyResult hasilGreedy = GreedyRecommendationEngine.recommendProducts(produkMasukBudget);
@@ -61,23 +56,14 @@ public class HybridRecommendationEngine {
             }
         }
 
-        // tahap 7 - antrean 3: masukkan produk kedua greedy ke barisan bawah (jika masih muat di dompet)
-        if (listGreedy.size() > 1) {
-            Product g2 = listGreedy.get(1);
-            if (g2.getPrice() <= sisaBudget && !kategoriTersimpan.contains(g2.getCategory().toLowerCase())) {
-                hasilMix.add(g2);
-                sisaBudget -= g2.getPrice();
-                kategoriTersimpan.add(g2.getCategory().toLowerCase());
-            }
-        }
-
-        // tahap 8 - antrean 4: masukkan sisa produk dari dp ke barisan bawah (jika masih muat)
-        for (int i = 1; i < listDP.size(); i++) {
-            Product sisaD = listDP.get(i);
-            if (sisaD.getPrice() <= sisaBudget && !kategoriTersimpan.contains(sisaD.getCategory().toLowerCase())) {
-                hasilMix.add(sisaD);
-                sisaBudget -= sisaD.getPrice();
-                kategoriTersimpan.add(sisaD.getCategory().toLowerCase());
+            int sisaBudget = budget - barangIdaman.getPrice();
+            if (sisaBudget > 0) {
+                //tahap 4 - Lempar sisa katalog ke DP dengan sisa budget untuk mencari barang terjangkau pendamping
+                List<Product> tambahanDP = RecommendationEngine.recommendProducts(sisaKatalog, sisaBudget);
+                if (tambahanDP != null && !tambahanDP.isEmpty()) {
+                    // DP mengembalikan max 2 barang, kita cukup ambil 1 untuk melengkapi Hybrid menjadi total 2 barang
+                    hasilMix.add(tambahanDP.get(0));
+                }
             }
         }
 

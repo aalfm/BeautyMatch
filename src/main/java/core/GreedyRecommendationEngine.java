@@ -36,8 +36,8 @@ public class GreedyRecommendationEngine {
         return filteredAndSorted;
     }
 
-    // proses memilih 2 produk dengan harga tertinggi dan rating bagus
-    public static GreedyResult recommendProducts(List<Product> products) {
+    // proses memilih 2 produk dengan harga tertinggi dan rating bagus yang sesuai budget
+    public static GreedyResult recommendProducts(List<Product> products, int budget) {
 
         List<Product> sortedProducts =
                 sortByHighestPriceAndGoodRating(products);
@@ -46,20 +46,24 @@ public class GreedyRecommendationEngine {
 
         int totalPrice = 0;
         double totalRating = 0;
+        int remainingBudget = budget;
 
         for (Product product : sortedProducts) {
             if (selectedProducts.size() >= 2) break;
 
-            selectedProducts.add(product);
-            totalPrice += product.getPrice();
-            totalRating += product.getRating();
+            if (product.getPrice() <= remainingBudget) {
+                selectedProducts.add(product);
+                totalPrice += product.getPrice();
+                totalRating += product.getRating();
+                remainingBudget -= product.getPrice();
+            }
         }
 
         return new GreedyResult(
                 selectedProducts,
                 totalPrice,
                 totalRating,
-                0
+                remainingBudget
         );
     }
 }

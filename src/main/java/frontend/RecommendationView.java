@@ -30,9 +30,6 @@ public class RecommendationView implements ContentView {
         // ── Input Form ─────────────────────────────────────────────
         VBox formCard = UI.card(24);
 
-        // Budget
-        TextField budgetField = new TextField();
-        budgetField.setPromptText("Contoh: 500000");
 
         // Skin type
         ComboBox<String> skinCombo = new ComboBox<>();
@@ -42,6 +39,17 @@ public class RecommendationView implements ContentView {
         skinCombo.setPromptText("Pilih jenis kulit...");
         skinCombo.setMaxWidth(Double.MAX_VALUE);
         skinCombo.setStyle(UI.inputStyle());
+
+        // Input Budget
+        Label budgetLabel = new Label("Masukkan Budget Maksimal (Rp)");
+        budgetLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: " + BeautyMatchApp.COLOR_SIDEBAR_TEXT + ";");
+        
+        TextField budgetField = new TextField();
+        budgetField.setPromptText("Contoh: 500000");
+        budgetField.setStyle(
+            "-fx-padding: 10; -fx-background-radius: 8; -fx-border-radius: 8;" +
+            "-fx-border-color: #E2D5D9; -fx-background-color: white;"
+        );
 
         // Categories (checkboxes)
         Label catLabel = new Label("Kategori yang diinginkan:");
@@ -88,6 +96,15 @@ public class RecommendationView implements ContentView {
             resultArea.setVisible(false);
             resultArea.getChildren().clear();
 
+            // Validate Budget
+            int budget;
+            try {
+                budget = Integer.parseInt(budgetField.getText().trim().replaceAll("[^0-9]", ""));
+            } catch (NumberFormatException ex) {
+                UI.showAlert("Input Tidak Valid", "Masukkan angka untuk budget.", Alert.AlertType.WARNING);
+                return;
+            }
+
             String skin = skinCombo.getValue();
             if (skin == null || skin.isBlank()) {
                 UI.showAlert("Input Tidak Valid", "Pilih jenis kulit terlebih dahulu.", Alert.AlertType.WARNING);
@@ -108,17 +125,17 @@ public class RecommendationView implements ContentView {
             try {
                 // Run Greedy
                 long startGreedy = System.nanoTime();
-                GreedyResult resultGreedy = ProductService.recommendGreedy(skin, cats);
+                GreedyResult resultGreedy = ProductService.recommendGreedy(budget, skin, cats);
                 long timeGreedy = System.nanoTime() - startGreedy;
 
                 // Run DP
                 long startDP = System.nanoTime();
-                List<Product> recsDP = ProductService.recommendDP(skin, cats);
+                List<Product> recsDP = ProductService.recommendDP(budget, skin, cats);
                 long timeDP = System.nanoTime() - startDP;
 
                 // Run Hybrid
                 long startHybrid = System.nanoTime();
-                List<Product> recsHybrid = ProductService.recommendHybrid(skin, cats);
+                List<Product> recsHybrid = ProductService.recommendHybrid(budget, skin, cats);
                 long timeHybrid = System.nanoTime() - startHybrid;
 
                 TabPane tabPane = new TabPane();
@@ -127,7 +144,7 @@ public class RecommendationView implements ContentView {
                 // Tab Greedy
                 Tab tabGreedy = new Tab("Metode Greedy");
                 tabGreedy.setClosable(false);
-                tabGreedy.setContent(buildResultContent(resultGreedy.getSelectedProducts(), resultGreedy.getTotalPrice(), resultGreedy.getTotalRating(), timeGreedy, "Greedy"));
+                tabGreedy.setContent(buildResultContent(resultGreedy.getSelectedProducts(), resultGreedy.getTotalPrice(), resultGreedy.getTotalRating(), budget, timeGreedy, "Greedy"));
 
                 // Tab DP
                 Tab tabDP = new Tab("Metode 0/1 Knapsack");
@@ -138,7 +155,7 @@ public class RecommendationView implements ContentView {
                     dpPrice += p.getPrice();
                     dpRating += p.getRating();
                 }
-                tabDP.setContent(buildResultContent(recsDP, dpPrice, dpRating, timeDP, "Knapsack"));
+                tabDP.setContent(buildResultContent(recsDP, dpPrice, dpRating, budget, timeDP, "Knapsack"));
 
                 // Tab Hybrid
                 Tab tabHybrid = new Tab("Metode Hybrid");
@@ -149,7 +166,7 @@ public class RecommendationView implements ContentView {
                     hybridPrice += p.getPrice();
                     hybridRating += p.getRating();
                 }
-                tabHybrid.setContent(buildResultContent(recsHybrid, hybridPrice, hybridRating, timeHybrid, "Hybrid"));
+                tabHybrid.setContent(buildResultContent(recsHybrid, hybridPrice, hybridRating, budget, timeHybrid, "Hybrid"));
 
                 tabPane.getTabs().addAll(tabGreedy, tabDP, tabHybrid);
 
@@ -169,12 +186,12 @@ public class RecommendationView implements ContentView {
         return page;
     }
 
-    private VBox buildResultContent(List<Product> recs, int totalPrice, double totalRating, long timeNano, String methodType) {
+    private VBox buildResultContent(List<Product> recs, int totalPrice, double totalRating, int budget, long timeNano, String methodType) {
         VBox container = new VBox(16);
         container.setPadding(new Insets(16, 0, 0, 0));
 
         if (recs.isEmpty()) {
-            Label noResult = new Label("😔  Tidak ada produk yang sesuai kriteria.");
+            Label noResult = new Label("😔  Budget tidak cukup atau tidak ada produk yang sesuai kriteria.");
             noResult.setStyle("-fx-font-size: 14px; -fx-text-fill: " + BeautyMatchApp.COLOR_TEXT_MUTED + ";");
             container.getChildren().add(noResult);
             return container;
@@ -203,13 +220,13 @@ public class RecommendationView implements ContentView {
         }
 
         // Summary
-        HBox summary = buildSummaryBar(recs.size(), totalPrice, totalRating);
+        HBox summary = buildSummaryBar(recs.size(), totalPrice, budget, totalRating);
 
         container.getChildren().addAll(header, cards, summary);
         return container;
     }
 
-    private HBox buildSummaryBar(int count, int total, double totalRating) {
+    private HBox buildSummaryBar(int count, int total, int budget, double totalRating) {
         HBox bar = new HBox(0);
         bar.setStyle(
             "-fx-background-color: " + BeautyMatchApp.COLOR_SIDEBAR + ";" +
@@ -224,6 +241,8 @@ public class RecommendationView implements ContentView {
             summaryItem("🛍", count + " Produk", "dipilih"),
             vDivider(),
             summaryItem("💰", "Rp " + String.format("%,d", total).replace(',', '.'), "total harga"),
+            vDivider(),
+            summaryItem("💚", "Rp " + String.format("%,d", budget - total).replace(',', '.'), "sisa budget"),
             vDivider(),
             summaryItem("★", String.format("%.1f", averageRating), "rata-rata rating")
         );
